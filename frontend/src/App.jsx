@@ -172,6 +172,7 @@ export default function App() {
         {activeTab === 'products' ? (
           <ProductList
             products={products}
+            categories={categories}
             loading={loadingProducts}
             error={productError}
             onAddProduct={handleOpenAddForm}

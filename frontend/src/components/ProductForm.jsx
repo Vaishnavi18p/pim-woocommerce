@@ -67,7 +67,6 @@ export default function ProductForm({ product, categories, onSave, onCancel }) {
       return;
     }
 
-    // Filter out incomplete attribute rows
     const cleanAttributes = attributes.filter(a => a.name.trim() && a.value.trim());
 
     setLoading(true);
@@ -96,22 +95,40 @@ export default function ProductForm({ product, categories, onSave, onCancel }) {
   };
 
   return (
-    <div className="modal-backdrop">
-      <div className="modal-card">
-        <div className="modal-header">
-          <h2 className="modal-title">{product ? 'Edit Product' : 'Add New Product'}</h2>
-          <button className="close-btn" onClick={onCancel}>&times;</button>
+    <div className="modal-overlay">
+      <div className="modern-modal-card">
+        <div className="modal-card-header">
+          <div className="modal-title-wrap">
+            <div className="modal-badge-icon">
+              {product ? '✏️' : '✨'}
+            </div>
+            <div>
+              <h2 className="modal-heading">{product ? 'Edit Product' : 'Add New Product'}</h2>
+              <p className="modal-subheading">Fill in catalog details to push to WooCommerce</p>
+            </div>
+          </div>
+          <button className="modal-close-button" onClick={onCancel}>&times;</button>
         </div>
 
-        {error && <div className="alert alert-error">{error}</div>}
+        {error && (
+          <div className="alert-modern alert-modern-error modal-alert">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span>{error}</span>
+          </div>
+        )}
 
-        <form onSubmit={handleSubmit} className="product-form">
-          <div className="form-grid">
-            <div className="form-group">
-              <label htmlFor="prod-sku">SKU <span className="required">*</span></label>
+        <form onSubmit={handleSubmit} className="modern-form-body">
+          <div className="form-row-grid">
+            <div className="input-group">
+              <label htmlFor="prod-sku">SKU Code <span className="label-required">*</span></label>
               <input
                 id="prod-sku"
                 type="text"
+                className="modern-input font-mono"
                 placeholder="e.g. TSHIRT-001"
                 value={sku}
                 onChange={(e) => setSku(e.target.value)}
@@ -119,40 +136,45 @@ export default function ProductForm({ product, categories, onSave, onCancel }) {
               />
             </div>
 
-            <div className="form-group">
-              <label htmlFor="prod-price">Price ($) <span className="required">*</span></label>
-              <input
-                id="prod-price"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                required
-              />
+            <div className="input-group">
+              <label htmlFor="prod-price">Price ($) <span className="label-required">*</span></label>
+              <div className="price-input-wrapper">
+                <span className="price-currency-symbol">$</span>
+                <input
+                  id="prod-price"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className="modern-input price-input font-mono"
+                  placeholder="0.00"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  required
+                />
+              </div>
             </div>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="prod-name">Product Name <span className="required">*</span></label>
+          <div className="input-group">
+            <label htmlFor="prod-name">Product Title <span className="label-required">*</span></label>
             <input
               id="prod-name"
               type="text"
-              placeholder="e.g. Classic Cotton Crewneck"
+              className="modern-input"
+              placeholder="e.g. Classic Organic Cotton Crewneck"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
             />
           </div>
 
-          <div className="form-group">
-            <div className="category-label-row">
-              <label htmlFor="prod-category">Category</label>
+          <div className="input-group">
+            <div className="label-with-action">
+              <label htmlFor="prod-category">Catalog Category</label>
               {!isAddingCategory && (
                 <button
                   type="button"
-                  className="link-btn"
+                  className="text-action-link"
                   onClick={() => setIsAddingCategory(true)}
                 >
                   + Quick Add Category
@@ -161,24 +183,30 @@ export default function ProductForm({ product, categories, onSave, onCancel }) {
             </div>
 
             {isAddingCategory ? (
-              <div className="inline-add-category">
+              <div className="category-quick-create-box">
                 <input
                   type="text"
-                  placeholder="New category name"
+                  className="modern-input"
+                  placeholder="Category name (e.g. Outerwear)"
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
                   autoFocus
                 />
-                <button type="button" className="btn btn-secondary btn-sm" onClick={handleCreateCategory}>Save</button>
-                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setIsAddingCategory(false)}>Cancel</button>
+                <button type="button" className="btn-secondary-modern" onClick={handleCreateCategory}>
+                  Save
+                </button>
+                <button type="button" className="btn-ghost-modern" onClick={() => setIsAddingCategory(false)}>
+                  Cancel
+                </button>
               </div>
             ) : (
               <select
                 id="prod-category"
+                className="modern-select"
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
               >
-                <option value="">-- No Category --</option>
+                <option value="">-- Select Category (Optional) --</option>
                 {availableCategories.map(cat => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
@@ -186,53 +214,61 @@ export default function ProductForm({ product, categories, onSave, onCancel }) {
             )}
           </div>
 
-          <div className="form-group">
+          <div className="input-group">
             <label htmlFor="prod-desc">Description</label>
             <textarea
               id="prod-desc"
               rows={3}
-              placeholder="Product description and features..."
+              className="modern-textarea"
+              placeholder="Write a clear summary of product materials, sizing, and details..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
           </div>
 
           {/* Dynamic Attributes Section */}
-          <div className="attributes-section">
-            <div className="attributes-header">
-              <label>Attributes (Name / Value pairs)</label>
+          <div className="attributes-card-wrapper">
+            <div className="attributes-header-row">
+              <div>
+                <label className="attributes-title">Product Attributes</label>
+                <p className="attributes-subtitle">Attach custom specs synced to WooCommerce (e.g. Color, Size, Fit)</p>
+              </div>
               <button
                 type="button"
-                className="btn btn-ghost btn-sm"
+                className="btn-add-attribute"
                 onClick={handleAddAttribute}
               >
-                + Add Attribute
+                + Add Spec
               </button>
             </div>
 
             {attributes.length === 0 ? (
-              <p className="empty-hint">No custom attributes added (e.g., Color: Blue, Size: XL).</p>
+              <div className="attributes-empty-banner">
+                <span>No custom attributes yet. Click "+ Add Spec" to attach colors, sizes, or materials.</span>
+              </div>
             ) : (
-              <div className="attributes-list">
+              <div className="attributes-rows-container">
                 {attributes.map((attr, idx) => (
-                  <div key={idx} className="attribute-row">
+                  <div key={idx} className="attribute-edit-row">
                     <input
                       type="text"
+                      className="modern-input attr-input"
                       placeholder="Name (e.g. Color)"
                       value={attr.name}
                       onChange={(e) => handleAttributeChange(idx, 'name', e.target.value)}
                     />
                     <input
                       type="text"
-                      placeholder="Value (e.g. Navy)"
+                      className="modern-input attr-input"
+                      placeholder="Value (e.g. Heather Grey)"
                       value={attr.value}
                       onChange={(e) => handleAttributeChange(idx, 'value', e.target.value)}
                     />
                     <button
                       type="button"
-                      className="btn-icon delete-icon"
+                      className="btn-remove-attr"
                       onClick={() => handleRemoveAttribute(idx)}
-                      title="Remove attribute"
+                      title="Remove specification"
                     >
                       &times;
                     </button>
@@ -242,12 +278,19 @@ export default function ProductForm({ product, categories, onSave, onCancel }) {
             )}
           </div>
 
-          <div className="modal-actions">
-            <button type="button" className="btn btn-secondary" onClick={onCancel} disabled={loading}>
+          <div className="modal-footer-actions">
+            <button type="button" className="btn-secondary-modern" onClick={onCancel} disabled={loading}>
               Cancel
             </button>
-            <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? 'Saving...' : product ? 'Update Product' : 'Create Product'}
+            <button type="submit" className="btn-primary-modern" disabled={loading}>
+              {loading ? (
+                <>
+                  <span className="spinner-white"></span>
+                  <span>Saving...</span>
+                </>
+              ) : (
+                <span>{product ? 'Save Changes' : 'Create Product'}</span>
+              )}
             </button>
           </div>
         </form>

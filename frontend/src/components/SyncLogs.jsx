@@ -1,6 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 export default function SyncLogs({ logs, loading, error, onRefresh }) {
+  const [filter, setFilter] = useState('all');
+
+  const filteredLogs = logs.filter(log => {
+    if (filter === 'all') return true;
+    return log.status === filter;
+  });
+
+  const successCount = logs.filter(l => l.status === 'success').length;
+  const failedCount = logs.filter(l => l.status === 'failed').length;
+
   const formatDateTime = (dateStr) => {
     if (!dateStr) return '—';
     try {
@@ -19,73 +29,111 @@ export default function SyncLogs({ logs, loading, error, onRefresh }) {
   };
 
   return (
-    <div className="card">
-      <div className="card-header">
-        <div className="header-left">
-          <h2 className="section-title">WooCommerce Synchronization Logs</h2>
-          <span className="section-count">{logs.length} audit entries</span>
+    <div className="modern-card">
+      <div className="modern-card-header">
+        <div>
+          <h2 className="card-title">WooCommerce Sync Audit Logs</h2>
+          <p className="card-subtitle">Real-time sync history, response codes, and error tracebacks</p>
         </div>
 
-        <button className="btn btn-secondary" onClick={onRefresh} disabled={loading}>
-          <span>🔄</span> Refresh Logs
+        <button className="btn-secondary-modern" onClick={onRefresh} disabled={loading}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={loading ? 'spin-icon' : ''}>
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+          <span>Refresh</span>
         </button>
       </div>
 
-      {error && <div className="alert alert-error">{error}</div>}
+      {/* Filter toolbar */}
+      <div className="table-toolbar">
+        <div className="filter-pill-group">
+          {[
+            { id: 'all', label: 'All Attempts', count: logs.length },
+            { id: 'success', label: 'Successful', count: successCount },
+            { id: 'failed', label: 'Failed', count: failedCount }
+          ].map(item => (
+            <button
+              key={item.id}
+              className={`filter-pill ${filter === item.id ? 'active' : ''}`}
+              onClick={() => setFilter(item.id)}
+            >
+              {item.label}
+              <span className="pill-badge">{item.count}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {error && <div className="alert-modern alert-modern-error">{error}</div>}
 
       {loading ? (
-        <div className="loading-state">
-          <div className="spinner large"></div>
-          <p>Fetching synchronization logs...</p>
+        <div className="state-container">
+          <div className="spinner-large"></div>
+          <p className="state-text">Fetching synchronization audit trail...</p>
         </div>
-      ) : logs.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-icon">📋</div>
-          <h3>No sync logs yet</h3>
-          <p>Sync logs will appear here each time a product is pushed to WooCommerce.</p>
+      ) : filteredLogs.length === 0 ? (
+        <div className="state-container">
+          <div className="empty-state-icon-wrap">
+            <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+          </div>
+          <h3 className="empty-state-title">No synchronization logs</h3>
+          <p className="empty-state-subtitle">Every sync attempt will be permanently logged here with timestamp and payload details.</p>
         </div>
       ) : (
-        <div className="table-responsive">
-          <table className="data-table">
+        <div className="table-container">
+          <table className="modern-table">
             <thead>
               <tr>
                 <th>Timestamp</th>
-                <th>Product</th>
+                <th>Target Product</th>
                 <th>SKU</th>
-                <th>Outcome</th>
-                <th>Audit Message</th>
+                <th>Status</th>
+                <th>Response & Audit Message</th>
               </tr>
             </thead>
             <tbody>
-              {logs.map(log => (
-                <tr key={log.id}>
-                  <td className="text-muted text-sm whitespace-nowrap">
-                    {formatDateTime(log.created_at)}
+              {filteredLogs.map(log => (
+                <tr key={log.id} className="table-row-hover">
+                  <td>
+                    <span className="font-mono text-xs text-muted">
+                      {formatDateTime(log.created_at)}
+                    </span>
                   </td>
 
                   <td>
-                    <span className="product-title">{log.product_name || `Product #${log.product_id || '—'}`}</span>
+                    <span className="product-name">
+                      {log.product_name || `Product #${log.product_id || '—'}`}
+                    </span>
                   </td>
 
                   <td>
                     {log.product_sku ? (
-                      <span className="sku-tag">{log.product_sku}</span>
+                      <span className="sku-badge">{log.product_sku}</span>
                     ) : (
-                      <span className="text-light">—</span>
+                      <span className="empty-dash">—</span>
                     )}
                   </td>
 
                   <td>
-                    <span className={`badge badge-${log.status === 'success' ? 'synced' : 'failed'}`}>
-                      <span className="badge-dot"></span>
+                    <span className={`status-badge status-${log.status === 'success' ? 'synced' : 'failed'}`}>
+                      <span className="status-dot"></span>
                       {log.status === 'success' ? 'Success' : 'Failed'}
                     </span>
                   </td>
 
-                  <td className="log-message-cell">
-                    <span className={`log-text ${log.status === 'failed' ? 'log-text-error' : ''}`}>
-                      {log.message}
-                    </span>
+                  <td className="log-col-detail">
+                    <div className={`log-detail-box ${log.status === 'failed' ? 'log-detail-error' : 'log-detail-success'}`}>
+                      <span className="log-detail-icon">{log.status === 'failed' ? '⚠️' : '✓'}</span>
+                      <span className="log-detail-message">{log.message}</span>
+                    </div>
                   </td>
                 </tr>
               ))}
