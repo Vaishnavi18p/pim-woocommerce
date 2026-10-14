@@ -34,10 +34,13 @@ describe('Supertest E2E: Sync against Mock WooCommerce Server', () => {
     }
   });
 
+  const testSku = `HOODIE-TEST-${Date.now()}`;
+  let createdWooId;
+
   it('syncs a new product to the running mock WooCommerce server (create)', async () => {
     const localProduct = {
       id: 101,
-      sku: 'HOODIE-RED-01',
+      sku: testSku,
       name: 'Red Fleece Hoodie',
       price: 55.00,
       description: 'Cozy red hoodie',
@@ -62,28 +65,30 @@ describe('Supertest E2E: Sync against Mock WooCommerce Server', () => {
     expect(res.body.success).toBe(true);
     expect(res.body.action).toBe('created');
     expect(res.body.wooProduct).toBeDefined();
-    expect(res.body.wooProduct.sku).toBe('HOODIE-RED-01');
+    expect(res.body.wooProduct.sku).toBe(testSku);
     expect(res.body.wooProduct.regular_price).toBe('55');
+
+    createdWooId = res.body.wooProduct.id;
 
     // Verify product status in PIM was updated to 'synced'
     expect(localProduct.sync_status).toBe('synced');
-    expect(localProduct.woo_id).toBe(res.body.wooProduct.id);
+    expect(localProduct.woo_id).toBe(createdWooId);
 
     // Verify directly against the Mock WooCommerce server REST API
-    const wooVerify = await fetch(`${baseUrl}/wp-json/wc/v3/products?sku=HOODIE-RED-01`);
+    const wooVerify = await fetch(`${baseUrl}/wp-json/wc/v3/products?sku=${testSku}`);
     const matchedProducts = await wooVerify.json();
 
     expect(wooVerify.status).toBe(200);
     expect(matchedProducts.length).toBe(1);
-    expect(matchedProducts[0].id).toBe(localProduct.woo_id);
+    expect(matchedProducts[0].id).toBe(createdWooId);
     expect(matchedProducts[0].name).toBe('Red Fleece Hoodie');
   });
 
   it('syncs an existing product to the running mock WooCommerce server (update)', async () => {
-    const existingWooId = 100;
+    const existingWooId = createdWooId || 100;
     const localProduct = {
       id: 102,
-      sku: 'HOODIE-RED-01',
+      sku: testSku,
       name: 'Red Fleece Hoodie - Sale',
       price: 45.00,
       description: 'Discounted red hoodie',
