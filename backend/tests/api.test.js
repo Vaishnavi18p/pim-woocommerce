@@ -23,7 +23,42 @@ describe('PIM REST API Endpoints', () => {
     });
   });
 
-  describe('POST /api/products validation', () => {
+  describe('Categories API', () => {
+    it('GET /api/categories returns all categories', async () => {
+      const mockCategories = [
+        { id: 1, name: 'Footwear', woo_id: null },
+        { id: 2, name: 'Clothing', woo_id: 10 }
+      ];
+      categoryRepository.findAll.mockResolvedValue(mockCategories);
+
+      const res = await request(app).get('/api/categories');
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toEqual(mockCategories);
+    });
+
+    it('POST /api/categories creates a category', async () => {
+      categoryRepository.findByName.mockResolvedValue(null);
+      categoryRepository.create.mockResolvedValue({ id: 3, name: 'Electronics', woo_id: null });
+
+      const res = await request(app)
+        .post('/api/categories')
+        .send({ name: 'Electronics' });
+
+      expect(res.statusCode).toBe(201);
+      expect(res.body).toEqual({ id: 3, name: 'Electronics', woo_id: null });
+    });
+
+    it('POST /api/categories rejects missing name', async () => {
+      const res = await request(app)
+        .post('/api/categories')
+        .send({});
+
+      expect(res.statusCode).toBe(400);
+      expect(res.body.error).toMatch(/category name is required/i);
+    });
+  });
+
+  describe('POST /api/products validation & creation', () => {
     it('rejects product without SKU', async () => {
       const res = await request(app)
         .post('/api/products')
@@ -47,18 +82,77 @@ describe('PIM REST API Endpoints', () => {
       expect(res.statusCode).toBe(400);
       expect(res.body.error).toMatch(/valid non-negative number/i);
     });
+
+    it('creates product with category and attributes', async () => {
+      const newProductData = {
+        sku: 'RUN-01',
+        name: 'Running Shoes',
+        price: 79.99,
+        category_id: 1,
+        attributes: [
+          { name: 'Color', value: 'Red' },
+          { name: 'Size', value: '42' }
+        ]
+      };
+
+      categoryRepository.findById.mockResolvedValue({ id: 1, name: 'Footwear' });
+      productRepository.findBySku.mockResolvedValue(null);
+      productRepository.create.mockResolvedValue({
+        id: 10,
+        ...newProductData,
+        category_name: 'Footwear',
+        sync_status: 'pending'
+      });
+
+      const res = await request(app)
+        .post('/api/products')
+        .send(newProductData);
+
+      expect(res.statusCode).toBe(201);
+      expect(res.body.category_name).toBe('Footwear');
+      expect(res.body.attributes).toHaveLength(2);
+    });
   });
 
-  describe('GET /api/products', () => {
-    it('returns list of products', async () => {
+  describe('GET /api/products and /api/products/:id', () => {
+    it('returns list of products including category_name and attributes', async () => {
       const mockList = [
-        { id: 1, name: 'Prod 1', sku: 'P1', price: 10, sync_status: 'synced', attributes: [] }
+        {
+          id: 1,
+          name: 'Prod 1',
+          sku: 'P1',
+          price: 10,
+          category_id: 1,
+          category_name: 'Footwear',
+          sync_status: 'synced',
+          attributes: [{ id: 1, name: 'Color', value: 'Blue' }]
+        }
       ];
       productRepository.findAll.mockResolvedValue(mockList);
 
       const res = await request(app).get('/api/products');
       expect(res.statusCode).toBe(200);
       expect(res.body).toEqual(mockList);
+      expect(res.body[0].category_name).toBe('Footwear');
+      expect(res.body[0].attributes).toEqual([{ id: 1, name: 'Color', value: 'Blue' }]);
+    });
+
+    it('returns a single product with category_name and attributes', async () => {
+      const mockProduct = {
+        id: 1,
+        name: 'Prod 1',
+        sku: 'P1',
+        price: 10,
+        category_id: 1,
+        category_name: 'Footwear',
+        attributes: [{ id: 1, name: 'Color', value: 'Blue' }]
+      };
+      productRepository.findById.mockResolvedValue(mockProduct);
+
+      const res = await request(app).get('/api/products/1');
+      expect(res.statusCode).toBe(200);
+      expect(res.body.category_name).toBe('Footwear');
+      expect(res.body.attributes).toEqual([{ id: 1, name: 'Color', value: 'Blue' }]);
     });
   });
 
