@@ -1,6 +1,6 @@
 -- Database schema for PIM (Product Information Management) System
-CREATE DATABASE IF NOT EXISTS pim_db;
-USE pim_db;
+CREATE DATABASE IF NOT EXISTS pim;
+USE pim;
 
 -- 1. Categories Table
 CREATE TABLE IF NOT EXISTS categories (

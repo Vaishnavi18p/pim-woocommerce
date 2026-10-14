@@ -2,7 +2,7 @@ require('dotenv').config();
 
 class WooCommerceClient {
   constructor(options = {}) {
-    this.baseUrl = (options.baseUrl || process.env.WOO_BASE_URL || 'http://localhost:5001').replace(/\/+$/, '');
+    this.baseUrl = (options.baseUrl || process.env.WOO_BASE_URL || 'http://localhost:4000').replace(/\/+$/, '');
     this.consumerKey = options.consumerKey || process.env.WOO_CONSUMER_KEY || '';
     this.consumerSecret = options.consumerSecret || process.env.WOO_CONSUMER_SECRET || '';
   }

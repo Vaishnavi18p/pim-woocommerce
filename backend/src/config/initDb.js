@@ -8,7 +8,7 @@ async function initDatabase() {
   const port = parseInt(process.env.DB_PORT || '3306', 10);
   const user = process.env.DB_USER || 'root';
   const password = process.env.DB_PASSWORD || '';
-  const database = process.env.DB_NAME || 'pim_db';
+  const database = process.env.DB_NAME || 'pim';
 
   console.log(`Connecting to MySQL server at ${host}:${port}...`);
   const connection = await mysql.createConnection({
