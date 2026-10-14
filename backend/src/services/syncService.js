@@ -1,4 +1,4 @@
-const defaultWooClient = require('../adapters/wooClient');
+const defaultWooClient = require('../integrations/wooClient');
 const productRepository = require('../repositories/productRepository');
 const categoryRepository = require('../repositories/categoryRepository');
 const syncLogRepository = require('../repositories/syncLogRepository');

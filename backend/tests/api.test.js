@@ -156,18 +156,44 @@ describe('PIM REST API Endpoints', () => {
     });
   });
 
-  describe('POST /api/products/:id/sync', () => {
-    it('triggers syncService.syncProduct', async () => {
+  describe('Sync API', () => {
+    it('POST /api/sync/:productId triggers single product sync', async () => {
       syncService.syncProduct.mockResolvedValue({
         success: true,
         action: 'created',
         wooProduct: { id: 101 }
       });
 
-      const res = await request(app).post('/api/products/1/sync');
+      const res = await request(app).post('/api/sync/5');
       expect(res.statusCode).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(syncService.syncProduct).toHaveBeenCalledWith('1');
+      expect(syncService.syncProduct).toHaveBeenCalledWith('5');
+    });
+
+    it('POST /api/sync triggers sync all pending or failed products', async () => {
+      syncService.syncAllPending.mockResolvedValue({
+        total: 2,
+        synced: 2,
+        failed: 0,
+        results: [{ success: true }, { success: true }]
+      });
+
+      const res = await request(app).post('/api/sync');
+      expect(res.statusCode).toBe(200);
+      expect(res.body.total).toBe(2);
+      expect(res.body.synced).toBe(2);
+      expect(syncService.syncAllPending).toHaveBeenCalled();
+    });
+
+    it('GET /api/sync/logs returns sync logs', async () => {
+      const mockLogs = [
+        { id: 1, product_id: 5, status: 'success', message: 'Synced', created_at: new Date() }
+      ];
+      syncLogRepository.findAll.mockResolvedValue(mockLogs);
+
+      const res = await request(app).get('/api/sync/logs');
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toEqual(JSON.parse(JSON.stringify(mockLogs)));
     });
   });
 });

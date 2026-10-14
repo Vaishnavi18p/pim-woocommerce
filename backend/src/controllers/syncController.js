@@ -4,7 +4,7 @@ const syncLogRepository = require('../repositories/syncLogRepository');
 class SyncController {
   async syncProduct(req, res, next) {
     try {
-      const productId = req.params.id || req.body.productId;
+      const productId = req.params.productId || req.params.id || req.body.productId;
       if (!productId) {
         return res.status(400).json({ error: 'Product ID is required for sync' });
       }
